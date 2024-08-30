@@ -12,13 +12,19 @@ import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
 import UserNewEditForm from '../user-new-edit-form';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
-export default function UserEditView({ id }) {
+export default function UserEditView() {
+  const {
+    user: { id },
+  } = useAuthContext();
   const settings = useSettingsContext();
 
-  const currentUser = _userList.find((user) => user.id === id);
+  console.log(id)
+
+  const currentUser = _userList[0];
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>

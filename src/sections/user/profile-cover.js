@@ -7,11 +7,13 @@ import ListItemText from '@mui/material/ListItemText';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { bgGradient } from 'src/theme/css';
+import { useRouter } from 'next/navigation';
 
 // ----------------------------------------------------------------------
 
 export default function ProfileCover({ name, avatarUrl, role, coverUrl }) {
   const theme = useTheme();
+  const { push } = useRouter();
 
   return (
     <Box
@@ -35,6 +37,7 @@ export default function ProfileCover({ name, avatarUrl, role, coverUrl }) {
         }}
       >
         <Avatar
+          onClick={() => push("/app/user/edit")}
           alt={name}
           src={avatarUrl}
           sx={{
