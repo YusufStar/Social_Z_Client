@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
@@ -10,8 +10,9 @@ import Tabs, { tabsClasses } from '@mui/material/Tabs';
 import { paths } from 'src/routes/paths';
 
 import { useMockedUser } from 'src/hooks/use-mocked-user';
+import axios, { endpoints } from 'src/utils/axios';
 
-import { _userAbout, _userFeeds, _userFriends, _userGallery, _userFollowers } from 'src/_mock';
+import { _userAbout, _userFeeds, _userFriends, _userGallery, _userFollowers, _mock } from 'src/_mock';
 
 import Iconify from 'src/components/iconify';
 import { useSettingsContext } from 'src/components/settings';
@@ -22,6 +23,8 @@ import ProfileCover from '../profile-cover';
 import ProfileFriends from '../profile-friends';
 import ProfileGallery from '../profile-gallery';
 import ProfileFollowers from '../profile-followers';
+import { useSearchParams } from 'next/navigation';
+import { useSnackbar } from 'notistack';
 
 // ----------------------------------------------------------------------
 
@@ -52,12 +55,18 @@ const TABS = [
 
 export default function UserProfileView() {
   const settings = useSettingsContext();
+  const params = useSearchParams();
+  const userId = params.get('userId');
 
   const { user } = useMockedUser();
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const [searchFriends, setSearchFriends] = useState('');
 
   const [currentTab, setCurrentTab] = useState('profile');
+
+  const [userData, setUserData] = useState(null);
 
   const handleChangeTab = useCallback((event, newValue) => {
     setCurrentTab(newValue);
@@ -67,14 +76,38 @@ export default function UserProfileView() {
     setSearchFriends(event.target.value);
   }, []);
 
+  const getUser = async () => {
+    try {
+      const {
+        data: { user, status, message },
+      } = await axios.get('auth/user', {
+        params: {
+          userId,
+        },
+      });
+
+      setUserData(null);
+      if (!status) {
+        enqueueSnackbar(message, { variant: 'error' });
+      } else {
+        setUserData(user);
+      }
+    } catch (error) {
+      enqueueSnackbar('Server Error.', { variant: 'error' });
+    }
+  };
+
+  useEffect(() => {
+    getUser();
+  }, [userId]);
+
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
         heading="Profile"
         links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
           { name: 'User', href: paths.dashboard.user.root },
-          { name: user?.displayName },
+          { name: userData?.firstName + ' ' + userData?.lastName },
         ]}
         sx={{
           mb: { xs: 3, md: 5 },
@@ -88,10 +121,10 @@ export default function UserProfileView() {
         }}
       >
         <ProfileCover
-          role={_userAbout.role}
-          name={user?.displayName}
-          avatarUrl={user?.photoURL}
-          coverUrl={_userAbout.coverUrl}
+          role={userData?.role}
+          name={userData?.firstName + ' ' + userData?.lastName}
+          avatarUrl={userData?.avatar}
+          coverUrl={userData?.cover || _mock.image.cover(3)}
         />
 
         <Tabs
@@ -118,7 +151,7 @@ export default function UserProfileView() {
         </Tabs>
       </Card>
 
-      {currentTab === 'profile' && <ProfileHome info={_userAbout} posts={_userFeeds} />}
+      {currentTab === 'profile' && <ProfileHome info={userData} posts={_userFeeds} />}
 
       {currentTab === 'followers' && <ProfileFollowers followers={_userFollowers} />}
 

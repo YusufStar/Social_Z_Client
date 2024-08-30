@@ -25,9 +25,15 @@ function getLocaleCode() {
 export function fNumber(inputValue) {
   const { code } = getLocaleCode();
 
-  if (!inputValue) return '';
+  if (inputValue === undefined || inputValue === null || isNaN(inputValue)) {
+    return '';
+  }
 
   const number = Number(inputValue);
+
+  if (number === 0) {
+    return '0';
+  }
 
   const fm = new Intl.NumberFormat(code, {
     minimumFractionDigits: 0,
