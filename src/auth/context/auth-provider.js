@@ -7,6 +7,7 @@ import axios, { endpoints } from 'src/utils/axios';
 
 import { AuthContext } from './auth-context';
 import { setSession, isValidToken } from './utils';
+import { useSnackbar } from 'notistack';
 
 // ----------------------------------------------------------------------
 /**
@@ -55,6 +56,7 @@ const STORAGE_KEY = 'accessToken';
 
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const {enqueueSnackbar} = useSnackbar()
 
   const initialize = useCallback(async () => {
     try {
@@ -65,8 +67,20 @@ export function AuthProvider({ children }) {
 
         const response = await axios.get(endpoints.auth.me);
 
-        const { user } = response.data;
-
+        const { user, status, message } = response.data;
+        if (!status) {
+          enqueueSnackbar(message, {variant: "error"})
+          
+          dispatch({
+            type: 'INITIAL',
+            payload: {
+              user: null,
+            },
+          });
+          return;
+        }
+        
+        enqueueSnackbar(message, {variant: "success"})
         dispatch({
           type: 'INITIAL',
           payload: {
@@ -108,7 +122,11 @@ export function AuthProvider({ children }) {
 
     const response = await axios.post(endpoints.auth.login, data);
 
-    const { accessToken, user } = response.data;
+    const { accessToken, user, status, message } = response.data;
+
+    if (!status) {
+      return { status, message };
+    }
 
     setSession(accessToken);
 
@@ -121,6 +139,8 @@ export function AuthProvider({ children }) {
         },
       },
     });
+
+    return { status, message };
   }, []);
 
   // REGISTER
@@ -135,8 +155,6 @@ export function AuthProvider({ children }) {
     const response = await axios.post(endpoints.auth.register, data);
 
     const { accessToken, user, status, message } = response.data;
-
-    console.log(response.data);
 
     if (!status) {
       return { status, message };

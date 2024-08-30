@@ -25,6 +25,8 @@ import { PATH_AFTER_LOGIN } from 'src/config-global';
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
+import { useSnackbar } from 'notistack';
+
 // ----------------------------------------------------------------------
 
 export default function LoginView() {
@@ -38,6 +40,8 @@ export default function LoginView() {
 
   const returnTo = searchParams.get('returnTo');
 
+  const {enqueueSnackbar} = useSnackbar()
+
   const password = useBoolean();
 
   const LoginSchema = Yup.object().shape({
@@ -46,8 +50,8 @@ export default function LoginView() {
   });
 
   const defaultValues = {
-    email: 'demo@minimals.cc',
-    password: 'demo1234',
+    email: 'yyilidz518@gmail.com',
+    password: '123456',
   };
 
   const methods = useForm({
@@ -63,9 +67,14 @@ export default function LoginView() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await login?.(data.email, data.password);
+      const { status, message } = await login?.(data.email, data.password);
 
-      router.push(returnTo || PATH_AFTER_LOGIN);
+      if (status) {
+        enqueueSnackbar(message, { variant: 'success' });
+        router.push(returnTo || PATH_AFTER_LOGIN);
+      } else {
+        setErrorMsg(message);
+      }
     } catch (error) {
       console.error(error);
       reset();
@@ -128,7 +137,7 @@ export default function LoginView() {
       {renderHead}
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        Use email : <strong>demo@minimals.cc</strong> / password :<strong> demo1234</strong>
+        Use email : <strong>yyilidz518@gmail.com</strong> / password :<strong> 123456</strong>
       </Alert>
 
       {!!errorMsg && (
